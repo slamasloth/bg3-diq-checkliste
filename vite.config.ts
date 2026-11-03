@@ -34,8 +34,8 @@ export default defineConfig({
         short_name: 'BG3 Checklist',
         lang: 'en',
         display: 'standalone',
-        background_color: '#17161a',
-        theme_color: '#7a3b1d',
+        background_color: '#232323',
+        theme_color: '#281c14',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

@@ -1,11 +1,13 @@
 <script lang="ts">
-  import type { PartyMember, Region } from './schema'
+  import type { Region } from './schema'
+  import type { CharacterGroup } from './roster'
   import { countRegion, rowPasses, type Filters } from './logic'
   import { isChecked, memberOf, noteOf, setAssign, setChecked } from './store.svelte'
   import RowView from './RowView.svelte'
+  import Icon from './Icon.svelte'
 
-  interface Props { region: Region; filters: Filters; party: PartyMember[]; forceOpen: boolean }
-  let { region, filters, party, forceOpen }: Props = $props()
+  interface Props { region: Region; filters: Filters; groups: CharacterGroup[]; forceOpen: boolean }
+  let { region, filters, groups, forceOpen }: Props = $props()
 
   const lookup = { isChecked, memberOf }
   const base = $derived(region.base.filter((r) => rowPasses(r, region.title, filters, lookup)))
@@ -20,7 +22,7 @@
     <summary style:--p="{counts[1] ? Math.round((counts[0] / counts[1]) * 100) : 0}%">
       <span>
         {region.title}
-        {#if region.pointOfNoReturn}<span class="b miss" title="Do these before you leave this act">Before you leave</span>{/if}
+        {#if region.pointOfNoReturn}<span class="b miss" title="Do these before you leave this act"><Icon name="warn" />Before you leave</span>{/if}
       </span>
       <span class="cnt" class:full={counts[1] > 0 && counts[0] === counts[1]}>{counts[0]}/{counts[1]}</span>
     </summary>
@@ -28,7 +30,7 @@
       <ul class="rows">
         {#each rows as r (r.id)}
           <RowView
-            row={r} {party} showAct={region.act === 'Unplaced'}
+            row={r} {groups} showAct={region.act === 'Unplaced'}
             checked={isChecked(r.id)} member={memberOf(r.id)} note={noteOf(r.id)}
             onToggle={setChecked}
             onAssign={(id, member) => setAssign(id, { member })}

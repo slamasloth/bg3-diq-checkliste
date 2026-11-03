@@ -1,23 +1,31 @@
 <script lang="ts">
-  import type { PartyMember, Row } from './schema'
+  import type { Row } from './schema'
   import { isCheckable, isItem, isMissable } from './logic'
+  import { characterColor, characterInitials, characterLabel, type CharacterGroup } from './roster'
+  import Icon from './Icon.svelte'
+  import type { IconName } from './icons'
 
   interface Props {
     row: Row
     checked: boolean
     member: string
     note: string
-    party: PartyMember[]
+    /** Everyone an item can be given to, grouped (player characters, companions, custom). */
+    groups: CharacterGroup[]
     onToggle: (id: string, c: boolean) => void
     onAssign: (id: string, member: string) => void
     onNote: (id: string, note: string) => void
     /** Show the act named by the source (used in the "Unplaced" tab, where the area is unknown). */
     showAct?: boolean
   }
-  let { row, checked, member, note, party, onToggle, onAssign, onNote, showAct = false }: Props = $props()
+  let { row, checked, member, note, groups, onToggle, onAssign, onNote, showAct = false }: Props = $props()
   let showDetail = $state(false)
 
-  const label = (p: PartyMember) => p.name + (p.figure ? ` (${p.figure})` : '')
+  /** The character this item is assigned to (for the coloured mark next to the title). */
+  const who = $derived(member ? groups.flatMap((g) => g.list).find((c) => c.id === member) : undefined)
+  const VERIFICATION_ICON: Record<string, IconName> = {
+    sourced: 'sourced', candidate: 'candidate', unverified: 'unverified', conflict: 'conflict', separate: 'separate',
+  }
   const shortMod = (m: string) => (m.length > 28 ? m.slice(0, 26) + '…' : m)
   const slug = (s: string) => s.replace(/\s+/g, '')
 
@@ -62,12 +70,17 @@
         {/if}
       </span>
       <div class="badges">
+        {#if who}
+          <span class="b who" style:background={characterColor(who)} title="Assigned to {characterLabel(who)}">
+            <span aria-hidden="true">{characterInitials(who)}</span><span class="sr-only">Assigned to {characterLabel(who)}</span>
+          </span>
+        {/if}
         {#if showAct && row.act}<span class="b" title="Act according to the source">{row.act}</span>{/if}
         {#if row.rarity}<span class="b ra-{slug(row.rarity)}">{row.rarity}</span>{/if}
-        {#if row.origin !== 'base'}<span class="b mod" title={row.mod}>{shortMod(row.mod ?? 'Mod')}</span>{/if}
-        {#if row.verification !== 'sourced'}<span class="b v-{row.verification}">{row.verification}</span>{/if}
-        {#if isMissable(row)}<span class="b miss">Missable</span>{/if}
-        {#if row.locMapping}<span class="b" title="Area only approximately assigned">Area approx.</span>{/if}
+        {#if row.origin !== 'base'}<span class="b mod" title={row.mod}><Icon name="mod" />{shortMod(row.mod ?? 'Mod')}</span>{/if}
+        {#if row.verification !== 'sourced'}<span class="b v-{row.verification}"><Icon name={VERIFICATION_ICON[row.verification] ?? 'candidate'} />{row.verification}</span>{/if}
+        {#if isMissable(row)}<span class="b miss"><Icon name="warn" />Missable</span>{/if}
+        {#if row.locMapping}<span class="b" title="Area only approximately assigned"><Icon name="pin" />Area approx.</span>{/if}
       </div>
     </div>
     <div class="tools">
@@ -78,8 +91,12 @@
           value={member}
           onchange={(e) => onAssign(row.id, e.currentTarget.value)}
         >
-          <option value="">— Character —</option>
-          {#each party as p (p.id)}<option value={p.id}>{label(p)}</option>{/each}
+          <option value="">Character</option>
+          {#each groups as g (g.label)}
+            <optgroup label={g.label}>
+              {#each g.list as p (p.id)}<option value={p.id}>{characterLabel(p)}</option>{/each}
+            </optgroup>
+          {/each}
         </select>
       {/if}
       <button type="button" class="dt" aria-expanded={showDetail} aria-label="Details" onclick={() => (showDetail = !showDetail)}>⋯</button>

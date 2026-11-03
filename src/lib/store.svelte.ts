@@ -1,6 +1,7 @@
 import { applyChange, stateToChanges } from './logic'
 import { LocalStorageRepo, parseState, type StateRepo } from './persist'
 import type { PartyMember, PersistedState } from './schema'
+import { ROSTER, type Character, type CharacterGroup } from './roster'
 import { Clock } from './sync/clock'
 import { isWellFormed } from './sync/validate'
 import type { WireChange } from './sync/types'
@@ -42,8 +43,14 @@ function commit(c: WireChange): void {
 export const isChecked = (id: string): boolean => Boolean(app.s.checked[id]?.c)
 export const memberOf = (id: string): string => app.s.assign[id]?.member ?? ''
 export const noteOf = (id: string): string => app.s.assign[id]?.note ?? ''
-/** Party ohne entfernte Mitglieder. */
+/** Custom characters added by the players (not removed). */
 export const members = (): PartyMember[] => app.s.party.filter((p) => !p.removed)
+/** Everyone who can receive an item: the built-in roster plus custom characters, grouped for the menus. */
+export const characterGroups = (): CharacterGroup[] => {
+  const custom = members()
+  return custom.length ? [...ROSTER, { label: 'Custom', list: custom }] : ROSTER
+}
+export const allCharacters = (): Character[] => characterGroups().flatMap((g) => g.list)
 
 export function setChecked(id: string, c: boolean): void {
   commit({ kind: 'checked', id, c, t: clock.next() })
