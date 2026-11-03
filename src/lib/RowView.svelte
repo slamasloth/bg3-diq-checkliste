@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Row } from './schema'
-  import { isCheckable, isItem, isMissable } from './logic'
+  import { isItem, isMissable } from './logic'
   import { characterColor, characterInitials, characterLabel, type CharacterGroup } from './roster'
   import Icon from './Icon.svelte'
   import type { IconName } from './icons'
@@ -46,11 +46,10 @@
       ] as [string, string | undefined][]
     ).filter(([, v]) => v),
   )
+  // Only offer the details button when there is something behind it (plain tips have nothing to show).
+  const hasDetail = $derived(details.length > 0 || isItem(row) || (row.origin !== 'base' && Boolean(row.url)))
 </script>
 
-{#if !isCheckable(row)}
-  <li class="note" style:padding-left="{14 + row.depth * 16}px">{row.text}</li>
-{:else}
   <li class="row" class:done={checked} style:padding-left="{8 + row.depth * 16}px">
     <label class="cbwrap">
       <input
@@ -99,7 +98,9 @@
           {/each}
         </select>
       {/if}
-      <button type="button" class="dt" aria-expanded={showDetail} aria-label="Details" onclick={() => (showDetail = !showDetail)}>⋯</button>
+      {#if hasDetail}
+        <button type="button" class="dt" aria-expanded={showDetail} aria-label="Details" onclick={() => (showDetail = !showDetail)}>⋯</button>
+      {/if}
     </div>
     {#if showDetail}
       <div class="detail">
@@ -114,4 +115,3 @@
       </div>
     {/if}
   </li>
-{/if}

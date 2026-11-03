@@ -20,8 +20,12 @@ describe('rowPasses', () => {
     expect(rowPasses(row({}), 'X', { ...noFilters(), source: 'mod' }, none)).toBe(false))
   it('status open hides completed rows', () =>
     expect(rowPasses(row({}), 'X', { ...noFilters(), status: 'open' }, { ...none, isChecked: () => true })).toBe(false))
-  it('note rows are never "open"', () =>
-    expect(rowPasses(row({ kind: 'note' }), 'X', { ...noFilters(), status: 'open' }, none)).toBe(false))
+  it('plain tips without a type icon can be ticked off, so they are "open" until then', () => {
+    const tip = row({ kind: 'note' })
+    expect(rowPasses(tip, 'X', { ...noFilters(), status: 'open' }, none)).toBe(true)
+    expect(rowPasses(tip, 'X', { ...noFilters(), status: 'open' }, { ...none, isChecked: () => true })).toBe(false)
+    expect(rowPasses(tip, 'X', { ...noFilters(), status: 'done' }, { ...none, isChecked: () => true })).toBe(true)
+  })
   it('character filter "-" shows only unassigned items', () => {
     const f = { ...noFilters(), member: '-' }
     expect(rowPasses(row({}), 'X', f, none)).toBe(true)
@@ -38,7 +42,7 @@ describe('rowPasses', () => {
 
 describe('countRegion', () => {
   const g: Region = { id: 'g', title: 'G', act: 'Act 1', base: [row({ id: 'a' }), row({ id: 'n', kind: 'note' })], mod: [row({ id: 'b', origin: 'fed' })] }
-  it('counts only checkable rows', () => expect(countRegion(g, (id) => id === 'a')).toEqual([1, 2]))
+  it('counts every row, including plain tips', () => expect(countRegion(g, (id) => id === 'a' || id === 'n')).toEqual([2, 3]))
 })
 
 describe('mergeStates', () => {

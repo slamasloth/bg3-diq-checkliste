@@ -140,7 +140,6 @@ li.row.done .title { color: var(--muted); text-decoration: line-through; text-de
 li.row.done .title a { color: var(--muted); font-weight: 400; }
 .cbwrap { display: grid; place-items: center; width: var(--tap); height: var(--tap); cursor: pointer; touch-action: manipulation; }
 .txt { min-width: 0; overflow-wrap: anywhere; padding-top: 9px; }
-li.note { padding: 8px 16px; color: var(--muted); font-size: .95rem; }
 .badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .b { font-size: .75rem; font-weight: 600; line-height: 1.4; padding: 1px 8px; border-radius: 2px; background: #2a2321; color: var(--muted); border: 1px solid var(--line-soft); }
 .b.ra-Common, .b.ra-Ordinary { color: var(--r-common); }

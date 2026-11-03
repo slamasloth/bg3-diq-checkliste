@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { ChecklistSchema, type Checklist } from './lib/schema'
-  import { countRegion, hasActiveFilter, isCheckable, noFilters, rowPasses } from './lib/logic'
+  import { countRegion, hasActiveFilter, noFilters, rowPasses } from './lib/logic'
   import { allCharacters, app, characterGroups, isChecked, memberOf, setActiveAct } from './lib/store.svelte'
   import { characterLabel } from './lib/roster'
   import RegionView from './lib/RegionView.svelte'
@@ -57,7 +57,7 @@
   const lookup = { isChecked, memberOf }
   /** Number of entries currently shown in this act; also announced to screen readers. */
   const shown = $derived(
-    regions.reduce((n, g) => n + [...g.base, ...g.mod].filter((r) => isCheckable(r) && rowPasses(r, g.title, filters, lookup)).length, 0),
+    regions.reduce((n, g) => n + [...g.base, ...g.mod].filter((r) => rowPasses(r, g.title, filters, lookup)).length, 0),
   )
   const pick = (a: string) => { act = a; setActiveAct(a); window.scrollTo(0, 0) }
   // Reset the character filter if the selected (custom) character was removed.

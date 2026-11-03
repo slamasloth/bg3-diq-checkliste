@@ -1,8 +1,8 @@
 import type { PersistedState, Region, Row } from './schema'
 import type { WireChange } from './sync/types'
 
-/** Rows without a checkbox (plain notes). */
-export const isCheckable = (r: Row): boolean => r.kind !== 'note'
+// Every row can be ticked off, including plain bullets without a type icon: in the source list each bullet has its
+// own ID, and a tip such as "Talk to a Strange Ox again" is exactly the kind of thing one wants to tick.
 
 /** Can this entry be assigned to a character? */
 export const isItem = (r: Row): boolean => r.kind === 'item'
@@ -38,7 +38,7 @@ export function rowPasses(r: Row, regionTitle: string, f: Filters, l: Lookup): b
   if (f.mod && r.mod !== f.mod) return false
   if (f.verification && r.verification !== f.verification) return false
   const done = l.isChecked(r.id)
-  if (f.status === 'open' && (!isCheckable(r) || done)) return false
+  if (f.status === 'open' && done) return false
   if (f.status === 'done' && !done) return false
   if (f.missableOnly && !isMissable(r)) return false
   if (f.itemsOnly && !isItem(r)) return false
@@ -59,7 +59,6 @@ export function countRegion(g: Region, isChecked: (id: string) => boolean): [don
   let done = 0
   let total = 0
   for (const r of [...g.base, ...g.mod]) {
-    if (!isCheckable(r)) continue
     total++
     if (isChecked(r.id)) done++
   }

@@ -17,6 +17,10 @@ describe('checklist.json (M1 data package)', () => {
     expect(rows.filter((r) => r.origin === 'fed')).toHaveLength(603)
     expect(rows.filter((r) => r.origin === 'content')).toHaveLength(42)
   })
+  it('gives every row an ID so that every row can be ticked off (276 plain tips included)', () => {
+    expect(rows.filter((r) => r.kind === 'note')).toHaveLength(276)
+    expect(rows.every((r) => r.id.length > 0)).toBe(true)
+  })
   it('has unique IDs', () => expect(new Set(rows.map((r) => r.id)).size).toBe(rows.length))
   it('assigns every region to a known act', () => {
     for (const g of parsed.data.regions) expect(parsed.data.acts).toContain(g.act)
