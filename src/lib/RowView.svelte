@@ -42,13 +42,15 @@
   <li class="note" style:padding-left="{14 + row.depth * 16}px">{row.text}</li>
 {:else}
   <li class="row" class:done={checked} style:padding-left="{8 + row.depth * 16}px">
-    <input
-      class="cb"
-      type="checkbox"
-      {checked}
-      aria-label="Done: {row.name ?? row.text}"
-      onchange={(e) => onToggle(row.id, e.currentTarget.checked)}
-    />
+    <label class="cbwrap">
+      <input
+        class="cb"
+        type="checkbox"
+        {checked}
+        aria-label="Done: {row.name ?? row.text}"
+        onchange={(e) => onToggle(row.id, e.currentTarget.checked)}
+      />
+    </label>
     <div class="txt">
       {#if parts}
         {parts.pre}<a href={row.url} target="_blank" rel="noopener">{row.name}</a>{parts.post}
