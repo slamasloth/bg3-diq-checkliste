@@ -102,3 +102,6 @@ dialog h2 { margin-top: 0; }
   .tools select { max-width: none; flex: 1; }
 }
 @media (prefers-reduced-motion: no-preference) { details.reg, button { transition: border-color .15s; } }
+
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); margin-left: 8px; }
+.dot.off { background: var(--warn); }

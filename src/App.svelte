@@ -6,6 +6,8 @@
   import RegionView from './lib/RegionView.svelte'
   import PartyDialog from './lib/PartyDialog.svelte'
   import BackupDialog from './lib/BackupDialog.svelte'
+  import SyncDialog from './lib/SyncDialog.svelte'
+  import { resumeSync, sync, syncNow } from './lib/sync.svelte'
 
   let data = $state<Checklist | null>(null)
   let error = $state('')
@@ -14,8 +16,11 @@
   let act = $state('Act 1')
   let party: PartyDialog
   let backup: BackupDialog
+  let syncDlg: SyncDialog
 
   onMount(async () => {
+    resumeSync()
+    window.addEventListener('online', syncNow)
     try {
       const res = await fetch(`${import.meta.env.BASE_URL}data/checklist.json`)
       if (!res.ok) throw new Error(`Could not load data (${res.status})`)
@@ -51,6 +56,9 @@
     <h1>BG3 DIQ R150 · Checklist</h1>
     <div class="actions">
       <button type="button" id="btnFilter" aria-expanded={showFilters} aria-controls="filters" onclick={() => (showFilters = !showFilters)}>Filters</button>
+      <button type="button" onclick={() => syncDlg.open()} title="Share progress between devices">
+        Sync{#if sync.link}<span class="dot" class:off={sync.status.state === 'offline'} aria-hidden="true"></span>{/if}
+      </button>
       <button type="button" onclick={() => party.open()}>Party</button>
       <button type="button" onclick={() => backup.open()}>Backup</button>
     </div>
@@ -111,3 +119,4 @@
 
 <PartyDialog bind:this={party} />
 <BackupDialog bind:this={backup} />
+<SyncDialog bind:this={syncDlg} />
