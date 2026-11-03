@@ -67,7 +67,7 @@
 
 <header class="top">
   <div class="bar">
-    <h1>BG3 DIQ R150 · Checklist</h1>
+    <h1><span class="eyebrow">BG3 DIQ R150</span> Checklist</h1>
     <div class="actions">
       <button type="button" id="btnFilter" aria-expanded={showFilters} aria-controls="filters" onclick={() => (showFilters = !showFilters)}>Filters</button>
       <button type="button" onclick={() => syncDlg.open()} title="Share progress between devices">

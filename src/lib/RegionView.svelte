@@ -17,7 +17,7 @@
 
 {#if visible}
   <details class="reg" open={open || forceOpen} ontoggle={(e) => (open = e.currentTarget.open)}>
-    <summary>
+    <summary style:--p="{counts[1] ? Math.round((counts[0] / counts[1]) * 100) : 0}%">
       <span>
         {region.title}
         {#if region.pointOfNoReturn}<span class="b miss" title="Do these before you leave this act">Before you leave</span>{/if}

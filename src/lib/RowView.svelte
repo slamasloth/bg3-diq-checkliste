@@ -54,11 +54,13 @@
       />
     </label>
     <div class="txt">
-      {#if parts}
-        {parts.pre}<a href={row.url} target="_blank" rel="noopener">{row.name}</a>{parts.post}
-      {:else}
-        {row.text}
-      {/if}
+      <span class="title">
+        {#if parts}
+          {parts.pre}<a href={row.url} target="_blank" rel="noopener">{row.name}</a>{parts.post}
+        {:else}
+          {row.text}
+        {/if}
+      </span>
       <div class="badges">
         {#if showAct && row.act}<span class="b" title="Act according to the source">{row.act}</span>{/if}
         {#if row.rarity}<span class="b ra-{slug(row.rarity)}">{row.rarity}</span>{/if}
