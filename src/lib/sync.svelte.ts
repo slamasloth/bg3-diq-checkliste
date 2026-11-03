@@ -44,6 +44,7 @@ function start(link: Link, seedLocal: boolean): void {
     outbox: localOutbox(link.id),
     clock,
     io: { applyRemote, snapshot },
+    reconcileMs: 60_000, // safety net: realtime messages can be lost silently
     onStatus: (s) => { sync.status = s },
   })
   setChangeSink((c) => engine?.enqueue(c))
@@ -62,6 +63,8 @@ const friendly = (e: unknown): string => {
   const m = e instanceof Error ? e.message : String(e)
   if (/invalid code or secret/i.test(m)) return 'Wrong code or secret.'
   if (/secret too short/i.test(m)) return 'The secret needs at least 8 characters.'
+  if (/too many attempts/i.test(m)) return 'Too many wrong attempts. Please wait a while and try again.'
+  if (/party limit/i.test(m)) return 'This device has reached its limit of created parties.'
   if (/anonymous/i.test(m) && /disabled|not enabled/i.test(m)) return 'Anonymous sign-ins are disabled in Supabase (Authentication → Providers).'
   if (/could not find the function|schema cache|does not exist/i.test(m)) return 'The database is not set up yet: run 0001_init.sql in the Supabase SQL editor.'
   return m
@@ -108,7 +111,12 @@ export function leaveSyncParty(): void {
   sync.status = { state: 'idle', pending: 0 }
 }
 
-/** Retry immediately (e.g. when the browser reports it is back online). */
+/** Reconnect immediately (e.g. when the browser reports it is back online). */
 export function syncNow(): void {
   if (engine && sync.link) void engine.connect({ seedLocal: false })
+}
+
+/** Pull the server state when the app becomes visible again (phones suspend background pages and drop realtime messages). */
+export function reconcileNow(): void {
+  if (engine && sync.link && document.visibilityState === 'visible') void engine.reconcile()
 }

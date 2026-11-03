@@ -44,9 +44,9 @@
       Share progress between devices. One player creates a party; the other joins with the code and the shared secret.
       Nothing is sent before you connect.
     </p>
-    <div class="row" role="tablist" aria-label="Create or join">
-      <button type="button" role="tab" aria-selected={mode === 'create'} class="tab" onclick={() => (mode = 'create')}>Create party</button>
-      <button type="button" role="tab" aria-selected={mode === 'join'} class="tab" onclick={() => (mode = 'join')}>Join party</button>
+    <div class="row" role="group" aria-label="Create or join">
+      <button type="button" aria-pressed={mode === 'create'} class="tab" onclick={() => (mode = 'create')}>Create party</button>
+      <button type="button" aria-pressed={mode === 'join'} class="tab" onclick={() => (mode = 'join')}>Join party</button>
     </div>
     <form onsubmit={submit}>
       <div class="row">

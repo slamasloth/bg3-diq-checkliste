@@ -146,7 +146,7 @@ describe('Sync zwischen zwei Geraeten', () => {
     clockA = 1100
     a.link.online = true
     await a.sched.runNext()
-    expect(server.rows.get('checked:x')).toMatchObject({ c: true, t: 5000 })
+    expect(server.rows.get('checked:x')).toMatchObject({ c: true, t: 5000 * 1024 })
     expect(a.state.checked.x?.c).toBe(false) // A kennt den Stand von B noch nicht ...
     await a.engine.connect({ seedLocal: false }) // ... bis zum naechsten Abgleich
     expect(a.state.checked.x?.c).toBe(true)
@@ -263,7 +263,7 @@ describe('Clock', () => {
   })
   it('ueberholt gesehene fremde Stempel', () => {
     const c = new Clock(() => 100)
-    c.observe(9000)
-    expect(c.next()).toBeGreaterThan(9000)
+    c.observe(9_000_000)
+    expect(c.next()).toBeGreaterThan(9_000_000)
   })
 })

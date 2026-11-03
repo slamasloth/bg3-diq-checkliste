@@ -2,6 +2,7 @@ import { applyChange, stateToChanges } from './logic'
 import { LocalStorageRepo, parseState, type StateRepo } from './persist'
 import type { PartyMember, PersistedState } from './schema'
 import { Clock } from './sync/clock'
+import { isWellFormed } from './sync/validate'
 import type { WireChange } from './sync/types'
 
 const repo: StateRepo = new LocalStorageRepo()
@@ -9,7 +10,20 @@ const repo: StateRepo = new LocalStorageRepo()
 export const app: { s: PersistedState; storageOk: boolean } = $state({ s: repo.load(), storageOk: true })
 
 /** Gemeinsame Uhr: monoton, ueberholt gesehene fremde Zeitstempel. Wird auch von der Sync-Engine genutzt. */
-export const clock = new Clock()
+/** Stable random device number (0-1023), so timestamps from different devices never collide. */
+function deviceNumber(): number {
+  const KEY = 'bg3diq.node'
+  try {
+    const saved = Number(localStorage.getItem(KEY))
+    if (Number.isInteger(saved) && saved >= 0 && saved < 1024 && localStorage.getItem(KEY) !== null) return saved
+    const n = Math.floor(Math.random() * 1024)
+    localStorage.setItem(KEY, String(n))
+    return n
+  } catch {
+    return Math.floor(Math.random() * 1024)
+  }
+}
+export const clock = new Clock(Date.now, deviceNumber())
 for (const c of stateToChanges(app.s)) clock.observe(c.t)
 
 /** Ziel fuer lokale Aenderungen; die Sync-Engine haengt sich hier ein (M3). */
@@ -70,6 +84,7 @@ export function importBackup(json: unknown): number {
   if (!parsed.success) throw new Error('Not a valid backup (format bg3diq-state, version 2 or 3).')
   let n = 0
   for (const c of stateToChanges(parsed.data)) {
+    if (!isWellFormed(c) || !clock.isPlausible(c.t)) continue // a backup file is untrusted input too
     clock.observe(c.t)
     if (applyChange(app.s, c)) { n++; sink(c) }
   }

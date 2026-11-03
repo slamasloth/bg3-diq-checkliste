@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { ChecklistSchema, type Checklist } from './lib/schema'
-  import { countRegion, hasActiveFilter, noFilters } from './lib/logic'
-  import { app, isChecked, members, setActiveAct } from './lib/store.svelte'
+  import { countRegion, hasActiveFilter, isCheckable, noFilters, rowPasses } from './lib/logic'
+  import { app, isChecked, memberOf, members, setActiveAct } from './lib/store.svelte'
   import RegionView from './lib/RegionView.svelte'
   import PartyDialog from './lib/PartyDialog.svelte'
   import BackupDialog from './lib/BackupDialog.svelte'
   import SyncDialog from './lib/SyncDialog.svelte'
-  import { resumeSync, sync, syncNow } from './lib/sync.svelte'
+  import { reconcileNow, resumeSync, sync, syncNow } from './lib/sync.svelte'
 
   let data = $state<Checklist | null>(null)
   let error = $state('')
@@ -21,6 +21,15 @@
   onMount(async () => {
     resumeSync()
     window.addEventListener('online', syncNow)
+    document.addEventListener('visibilitychange', reconcileNow)
+    // Keep keyboard focus clear of the pinned bar (WCAG 2.4.11): tell the browser how tall it is.
+    // On phones `.top` uses display: contents (zero height) and only `.tabs` is pinned, so skip boxes without height.
+    const pinned = () => [document.querySelector('.top'), document.querySelector('.tabs')]
+      .find((el) => el && getComputedStyle(el).position === 'sticky' && el.getBoundingClientRect().height > 0)
+    const measure = () =>
+      document.documentElement.style.setProperty('--sticky-h', `${Math.round(pinned()?.getBoundingClientRect().height ?? 0)}px`)
+    new ResizeObserver(measure).observe(document.body)
+    window.addEventListener('resize', measure)
     try {
       const res = await fetch(`${import.meta.env.BASE_URL}data/checklist.json`)
       if (!res.ok) throw new Error(`Could not load data (${res.status})`)
@@ -43,6 +52,11 @@
     }
     return out
   })
+  const lookup = { isChecked, memberOf }
+  /** Number of entries currently shown in this act; also announced to screen readers. */
+  const shown = $derived(
+    regions.reduce((n, g) => n + [...g.base, ...g.mod].filter((r) => isCheckable(r) && rowPasses(r, g.title, filters, lookup)).length, 0),
+  )
   const pick = (a: string) => { act = a; setActiveAct(a); window.scrollTo(0, 0) }
   const label = (p: { name: string; figure: string }) => p.name + (p.figure ? ` (${p.figure})` : '')
   // Reset the character filter if the selected member was removed.
@@ -64,13 +78,13 @@
     </div>
   </div>
   {#if data}
-    <div class="tabs" role="tablist" aria-label="Acts">
+    <nav class="tabs" aria-label="Acts">
       {#each data.acts as a (a)}
-        <button type="button" class="tab" role="tab" aria-selected={a === act} onclick={() => pick(a)}>
-          {a}<small>{tabCounts[a]?.[0]}/{tabCounts[a]?.[1]}</small>
+        <button type="button" class="tab" aria-current={a === act ? 'true' : undefined} onclick={() => pick(a)}>
+          {a}<small><span class="sr-only"> – </span>{tabCounts[a]?.[0]}/{tabCounts[a]?.[1]}<span class="sr-only"> done</span></small>
         </button>
       {/each}
-    </div>
+    </nav>
     <div class="filters" class:show={showFilters} id="filters">
       <input type="search" placeholder="Search (name, place, mod)" aria-label="Search" bind:value={filters.query} />
       <select aria-label="Status" bind:value={filters.status}>
@@ -97,7 +111,9 @@
   {/if}
 </header>
 
-<main aria-live="polite">
+<main>
+  <!-- Small status message instead of a live region around 500+ rows -->
+  <p class="sr-only" role="status">{data ? `${shown} entries shown in ${act}.` : ''}</p>
   {#if error}
     <p class="empty" role="alert">Error: {error}</p>
   {:else if !data}
@@ -106,7 +122,7 @@
     {#each regions as g (g.id)}
       <RegionView region={g} {filters} party={members()} forceOpen={Boolean(filters.query)} />
     {/each}
-    {#if hasActiveFilter(filters) && regions.length === 0}<p class="empty">No entries match these filters.</p>{/if}
+    {#if hasActiveFilter(filters) && shown === 0}<p class="empty">No entries match these filters.</p>{/if}
   {/if}
 </main>
 

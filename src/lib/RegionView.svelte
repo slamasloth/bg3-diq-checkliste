@@ -18,14 +18,17 @@
 {#if visible}
   <details class="reg" open={open || forceOpen} ontoggle={(e) => (open = e.currentTarget.open)}>
     <summary>
-      <span>{region.title}</span>
+      <span>
+        {region.title}
+        {#if region.pointOfNoReturn}<span class="b miss" title="Do these before you leave this act">Before you leave</span>{/if}
+      </span>
       <span class="cnt" class:full={counts[1] > 0 && counts[0] === counts[1]}>{counts[0]}/{counts[1]}</span>
     </summary>
     {#snippet list(rows: typeof base)}
       <ul class="rows">
         {#each rows as r (r.id)}
           <RowView
-            row={r} {party}
+            row={r} {party} showAct={region.act === 'Unplaced'}
             checked={isChecked(r.id)} member={memberOf(r.id)} note={noteOf(r.id)}
             onToggle={setChecked}
             onAssign={(id, member) => setAssign(id, { member })}

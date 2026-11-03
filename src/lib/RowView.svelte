@@ -11,8 +11,10 @@
     onToggle: (id: string, c: boolean) => void
     onAssign: (id: string, member: string) => void
     onNote: (id: string, note: string) => void
+    /** Show the act named by the source (used in the "Unplaced" tab, where the area is unknown). */
+    showAct?: boolean
   }
-  let { row, checked, member, note, party, onToggle, onAssign, onNote }: Props = $props()
+  let { row, checked, member, note, party, onToggle, onAssign, onNote, showAct = false }: Props = $props()
   let showDetail = $state(false)
 
   const label = (p: PartyMember) => p.name + (p.figure ? ` (${p.figure})` : '')
@@ -32,7 +34,7 @@
         ['Found at', row.foundAt], ['Trigger', row.condition], ['Reward', row.reward],
         ['Missable', row.missableText], ['Effect', row.effect], ['Effect status', row.effectStatus],
         ['Evidence', row.evidence], ['Note', row.hint], ['Duplicate', row.dedupeNote], ['Type', row.contentType],
-        ['Configuration', row.configDependency],
+        ['Configuration', row.configDependency], ['Mapped area (conflicts with act)', row.areaHint],
       ] as [string, string | undefined][]
     ).filter(([, v]) => v),
   )
@@ -58,6 +60,7 @@
         {row.text}
       {/if}
       <div class="badges">
+        {#if showAct && row.act}<span class="b" title="Act according to the source">{row.act}</span>{/if}
         {#if row.rarity}<span class="b ra-{slug(row.rarity)}">{row.rarity}</span>{/if}
         {#if row.origin !== 'base'}<span class="b mod" title={row.mod}>{shortMod(row.mod ?? 'Mod')}</span>{/if}
         {#if row.verification !== 'sourced'}<span class="b v-{row.verification}">{row.verification}</span>{/if}

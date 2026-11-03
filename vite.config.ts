@@ -2,10 +2,30 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defineConfig } from 'vitest/config'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Content-Security-Policy for the production build only (the dev server needs inline scripts for hot reload).
+// Scripts only from this origin; network only to this origin and Supabase; no plugins, no foreign <base>.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'", // Svelte sets element styles; remove once nothing needs them
+  "img-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "manifest-src 'self'",
+  "worker-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+].join('; ')
+
 export default defineConfig({
   base: './',
   plugins: [
     svelte(),
+    {
+      name: 'csp-meta',
+      apply: 'build',
+      transformIndexHtml: (html) => html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`),
+    },
     VitePWA({
       registerType: 'autoUpdate',
       workbox: { globPatterns: ['**/*.{js,css,html,json,svg,png}'], maximumFileSizeToCacheInBytes: 3_000_000 },

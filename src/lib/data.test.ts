@@ -34,6 +34,21 @@ describe('checklist.json (M1 data package)', () => {
     const titles = parsed.data.regions.map((g) => g.title + g.act)
     expect(titles.filter((t) => /[äöüÄÖÜß]|\b(Akt|ungeklärt|Fundort)\b/.test(t))).toEqual([])
   })
+  it('"BEFORE CONTINUING" checklists sit in the act being left and are flagged', () => {
+    const act = (t: string) => parsed.data.regions.find((g) => g.title === t)
+    expect(act('BEFORE CONTINUING TO ACT 1.5')).toMatchObject({ act: 'Act 1', pointOfNoReturn: true })
+    expect(act('BEFORE CONTINUING TO ACT 2')).toMatchObject({ act: 'Act 1.5', pointOfNoReturn: true })
+    expect(act('BEFORE CONTINUING TO THE TEMPLE')).toMatchObject({ act: 'Act 2', pointOfNoReturn: true })
+    expect(act('BEFORE CONTINUING TO ACT 3')).toMatchObject({ act: 'Act 2', pointOfNoReturn: true })
+  })
+  it('never shows a source row in an act that contradicts the act named by the source', () => {
+    const rank = (a: string) => ({ 'Act 1': 1, 'Act 1.5': 1, 'Act 2': 2, 'Act 3': 3 })[a]
+    const bad = parsed.data.regions
+      .filter((g) => rank(g.act))
+      .flatMap((g) => g.mod.filter((r) => r.act && rank(r.act) && rank(r.act) !== rank(g.act)).map((r) => `${r.text} (${r.act} in ${g.title}/${g.act})`))
+    expect(bad).toEqual([])
+  })
+  it('only uses https links', () => expect(rows.filter((r) => r.url && !r.url.startsWith('https://'))).toEqual([]))
   it('uses English verification labels', () => {
     const allowed = new Set(['sourced', 'candidate', 'unverified', 'conflict', 'separate'])
     expect(rows.every((r) => allowed.has(r.verification))).toBe(true)

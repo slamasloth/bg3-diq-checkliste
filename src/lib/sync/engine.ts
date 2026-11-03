@@ -1,4 +1,5 @@
 import { Clock } from './clock'
+import { isWellFormed } from './validate'
 import { changeKey, type OutboxStore, type SyncStatus, type SyncTransport, type WireChange } from './types'
 
 /** Anbindung an den lokalen Zustand der App. */
@@ -17,6 +18,8 @@ export interface EngineOptions {
   /** Planer fuer Wiederholungen; gibt eine Abbruchfunktion zurueck. In Tests ersetzbar. */
   schedule?: (fn: () => void, ms: number) => () => void
   batchSize?: number
+  /** Re-fetch the server state every n ms while connected, as a safety net for lost realtime messages. Off by default. */
+  reconcileMs?: number
   onStatus?: (s: SyncStatus) => void
 }
 
@@ -35,6 +38,7 @@ export class SyncEngine {
   private flushing = false
   private failures = 0
   private cancelRetry: (() => void) | null = null
+  private cancelTicker: (() => void) | null = null
   private unsubscribe: (() => void) | null = null
   private connected = false
   private state: SyncStatus['state'] = 'idle'
@@ -79,9 +83,37 @@ export class SyncEngine {
     }
     if (opts.seedLocal) for (const c of this.o.io.snapshot()) this.enqueue(c)
     await this.flush()
+    this.armTicker()
+  }
+
+  /**
+   * Fetch the full server state and apply it, then send anything still waiting. Realtime messages can be lost
+   * without any error (sleeping phone, flaky network), so a connected device must be able to heal itself.
+   */
+  async reconcile(): Promise<void> {
+    if (!this.connected) return
+    try {
+      this.receive(await this.o.transport.pull())
+    } catch {
+      this.fail(() => this.reconcile())
+      return
+    }
+    await this.flush()
+  }
+
+  private armTicker(): void {
+    const ms = this.o.reconcileMs
+    if (!ms || !this.connected) return
+    this.cancelTicker?.()
+    this.cancelTicker = this.schedule(() => {
+      this.cancelTicker = null
+      void this.reconcile().finally(() => this.armTicker())
+    }, ms)
   }
 
   disconnect(): void {
+    this.cancelTicker?.()
+    this.cancelTicker = null
     this.connected = false
     this.unsubscribe?.()
     this.unsubscribe = null
@@ -89,10 +121,16 @@ export class SyncEngine {
     this.cancelRetry = null
   }
 
+  /** Number of received changes dropped as malformed or implausible (for diagnostics and tests). */
+  rejected = 0
+
   private receive(changes: WireChange[]): void {
-    if (!changes.length) return
-    for (const c of changes) this.clock.observe(c.t)
-    this.o.io.applyRemote(changes)
+    // Changes from the server are untrusted: any party member can write arbitrary rows.
+    const valid = changes.filter((c) => isWellFormed(c) && this.clock.isPlausible(c.t))
+    this.rejected += changes.length - valid.length
+    if (!valid.length) return
+    for (const c of valid) this.clock.observe(c.t)
+    this.o.io.applyRemote(valid)
   }
 
   async flush(): Promise<void> {

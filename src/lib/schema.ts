@@ -29,6 +29,7 @@ export const RowSchema = z.object({
   reward: z.string().optional(),
   configDependency: z.string().optional(),
   aliasIds: z.array(z.string()).optional(),
+  areaHint: z.string().optional(),
 })
 export type Row = z.infer<typeof RowSchema>
 
@@ -38,6 +39,7 @@ export const RegionSchema = z.object({
   act: z.string(),
   base: z.array(RowSchema),
   mod: z.array(RowSchema),
+  pointOfNoReturn: z.boolean().optional(),
 })
 export type Region = z.infer<typeof RegionSchema>
 

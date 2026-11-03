@@ -82,6 +82,8 @@ export async function joinParty(client: SupabaseClient, code: string, secret: st
   await ensureSignedIn(client)
   const { data, error } = await client.rpc('join_party', { p_code: code.trim().toUpperCase(), p_secret: secret })
   if (error) throw new Error(error.message)
+  // 0002_hardening.sql returns NULL for a wrong code/secret (it must commit its failure counter); 0001 raised an error.
+  if (data === null) throw new Error('invalid code or secret')
   if (typeof data !== 'string') throw new Error('Unexpected response from join_party')
   return data
 }
