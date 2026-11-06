@@ -28,7 +28,7 @@ export default defineConfig({
     },
     VitePWA({
       registerType: 'autoUpdate',
-      workbox: { globPatterns: ['**/*.{js,css,html,json,svg,png}'], maximumFileSizeToCacheInBytes: 3_000_000 },
+      workbox: { globPatterns: ['**/*.{js,css,html,json,svg,png,ttf}'], maximumFileSizeToCacheInBytes: 3_000_000 },
       manifest: {
         name: 'BG3 DIQ Checklist',
         short_name: 'BG3 Checklist',

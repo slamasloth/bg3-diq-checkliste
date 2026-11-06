@@ -4,6 +4,15 @@
  * Colours are taken from the guides' stylesheet (bg3-diq-guides/build/build_pdf.py).
  * Measured contrast: all text >= 4.5:1, control borders >= 3:1 (see EXPERTEN_REVIEW.md for the method).
  */
+/* BG3 UI faces (SIL OFL): Alegreya Sans for text, Alegreya for headings; same files as the PDF guides. */
+@font-face { font-family: "Alegreya Sans"; font-weight: 400; font-style: normal; font-display: swap; src: url("./assets/fonts/AlegreyaSans_400Regular.ttf") format("truetype"); }
+@font-face { font-family: "Alegreya Sans"; font-weight: 400; font-style: italic; font-display: swap; src: url("./assets/fonts/AlegreyaSans_400Regular_Italic.ttf") format("truetype"); }
+@font-face { font-family: "Alegreya Sans"; font-weight: 700; font-style: normal; font-display: swap; src: url("./assets/fonts/AlegreyaSans_700Bold.ttf") format("truetype"); }
+@font-face { font-family: "Alegreya Sans"; font-weight: 700; font-style: italic; font-display: swap; src: url("./assets/fonts/AlegreyaSans_700Bold_Italic.ttf") format("truetype"); }
+@font-face { font-family: "Alegreya"; font-weight: 400; font-style: normal; font-display: swap; src: url("./assets/fonts/Alegreya_400Regular.ttf") format("truetype"); }
+@font-face { font-family: "Alegreya"; font-weight: 400; font-style: italic; font-display: swap; src: url("./assets/fonts/Alegreya_400Regular_Italic.ttf") format("truetype"); }
+@font-face { font-family: "Alegreya"; font-weight: 700; font-style: normal; font-display: swap; src: url("./assets/fonts/Alegreya_700Bold.ttf") format("truetype"); }
+@font-face { font-family: "Alegreya"; font-weight: 700; font-style: italic; font-display: swap; src: url("./assets/fonts/Alegreya_700Bold_Italic.ttf") format("truetype"); }
 :root {
   color-scheme: dark;
   --bg: #232323; /* page */
@@ -29,7 +38,7 @@
   /* rarity / source colours (on --box) */
   --r-common: #c2c2c2; --r-unc: #6fd08a; --r-rare: #7cb4ff; --r-vr: #c9a4ff; --r-leg: #ffa03c; --r-story: #ff8fc0;
   --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23c2c2c2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-  --serif: "Linux Libertine", "Libertinus Serif", Georgia, "Bitstream Charter", Caladea, serif;
+  --serif: Alegreya, Georgia, serif;
   --tap: 44px; /* Apple HIG: minimum hit target 44 x 44 pt */
   --pad: max(16px, env(safe-area-inset-left));
 }
@@ -42,7 +51,7 @@ html {
 body {
   margin: 0; background: var(--bg); color: var(--ink);
   /* HIG body size 17 px, written in rem so it follows the user's text-size setting (Dynamic Type equivalent) */
-  font: 1.0625rem/1.4 Inter, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
+  font: 1.1875rem/1.4 "Alegreya Sans", system-ui, sans-serif; /* Alegreya Sans has a small x-height, so slightly larger than the HIG 17 px */
   padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
   -webkit-font-smoothing: antialiased;
 }
@@ -91,7 +100,7 @@ input[type=checkbox]:checked::after { transform: rotate(-45deg) scale(1); }
 .top { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--gold); padding: 12px var(--pad) 12px; }
 .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 h1 { font: 400 1.6rem/1.15 var(--serif); color: var(--h); margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-h1 .eyebrow { display: block; font: 700 .75rem/1.4 Inter, system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+h1 .eyebrow { display: block; font: 700 .8125rem/1.4 "Alegreya Sans", system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .actions { display: flex; gap: 8px; }
 .tabs { display: flex; gap: 6px; overflow-x: auto; padding: 12px 0 4px; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
