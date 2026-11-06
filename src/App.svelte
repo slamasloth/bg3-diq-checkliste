@@ -8,6 +8,7 @@
   import PartyDialog from './lib/PartyDialog.svelte'
   import BackupDialog from './lib/BackupDialog.svelte'
   import SyncDialog from './lib/SyncDialog.svelte'
+  import GuidesDialog from './lib/GuidesDialog.svelte'
   import Icon from './lib/Icon.svelte'
   import { reconcileNow, resumeSync, sync, syncNow } from './lib/sync.svelte'
 
@@ -19,6 +20,7 @@
   let party: PartyDialog
   let backup: BackupDialog
   let syncDlg: SyncDialog
+  let guides: GuidesDialog
 
   onMount(async () => {
     resumeSync()
@@ -75,6 +77,7 @@
         <Icon name="sync" /><span>Sync{#if sync.link}<span class="dot" class:off={sync.status.state === 'offline'} aria-hidden="true"></span>{/if}</span>
       </button>
       <button type="button" onclick={() => party.open()} title="Add characters beyond the built-in roster"><Icon name="users" />Characters</button>
+      <button type="button" onclick={() => guides.open()} title="Save the build guides as PDF"><Icon name="guide" />Guides</button>
       <button type="button" onclick={() => backup.open()}><Icon name="backup" />Backup</button>
     </div>
   </div>
@@ -141,3 +144,4 @@
 <PartyDialog bind:this={party} />
 <BackupDialog bind:this={backup} />
 <SyncDialog bind:this={syncDlg} />
+<GuidesDialog bind:this={guides} />
