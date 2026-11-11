@@ -29541,9 +29541,9 @@
     ],
     "catalog": [
      {
-      "act": "Aktkonflikt prüfen",
+      "act": "Akt 2",
       "region": "Crèche Y'llek (Aktkonflikt)",
-      "place": "Ardent Jhe'rezath",
+      "place": "Dock Observer (installed FED script) / Ardent Jhe'rezath (published FED list)",
       "confidence": "B/C: ältere FED-Listen-Kopie oder aktueller Changelog; aktive FED-Version unbekannt"
      }
     ],
@@ -30400,8 +30400,8 @@
   },
   {
    "id": "G07",
-   "status": "gekennzeichnet",
-   "title": "FED-Verteilung aus dem installierten FED-Skript: 225 von 267 genutzten FED-Gegenständen belegt, davon 194 mit Akt"
+   "status": "teilweise",
+   "title": "FED-Verteilung aus dem installierten FED-Skript: 225 von 267 genutzten FED-Gegenständen belegt, davon 194 mit Akt; 42 nicht im Skript, davon 15 per Datei verortet"
   },
   {
    "id": "G08",
@@ -31001,5 +31001,5 @@
    }
   ]
  },
- "packHash": "688c25f4830576ce24f84885c1c0be520eb44638feb4d7ed102eb4f4f2e15adb"
+ "packHash": "22f84a68a748cd5ffe5c6118feaab5a53fd3ba324696a59511c95ede46ec177d"
 }

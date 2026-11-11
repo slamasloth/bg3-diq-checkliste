@@ -21,6 +21,20 @@ describe('checklist.json (M1 data package)', () => {
     expect(rows.filter((r) => r.kind === 'note')).toHaveLength(276)
     expect(rows.every((r) => r.id.length > 0)).toBe(true)
   })
+  it('has no open data conflicts (JWL double UUIDs, step 3 leftovers, FED act conflict, Necrobroker)', () => {
+    expect(parsed.data.issues).toEqual([])
+    const act2 = parsed.data.regions.filter((g) => g.act === 'Act 2').flatMap((g) => g.mod)
+    expect(act2.filter((r) => r.text === "Cloak of the Smiter's Boon")).toHaveLength(1)
+    expect(rows.filter((r) => r.text === "Cloak of the Smiter's Boon")).toHaveLength(1)
+    expect(parsed.data.regions.some((g) => g.title === 'Act conflict (blocked)')).toBe(false)
+    const necro = rows.find((r) => r.origin === 'content' && /Necrobroker clues/.test(r.text))
+    expect(necro?.configDependency).toMatch(/active in the load order/)
+    expect(necro?.condition).not.toMatch(/Only with/)
+  })
+  it('keeps the three step-3 rows without a known area in their own group (no invented location)', () => {
+    const group = parsed.data.regions.find((g) => g.title === 'Step 3: location open')
+    expect(group?.mod.map((r) => r.id).sort()).toEqual(['diq-ct-214ae86aee85c2', 'diq-ct-4145efad942318', 'diq-ct-f5056109dc1609'])
+  })
   it('has unique IDs', () => expect(new Set(rows.map((r) => r.id)).size).toBe(rows.length))
   it('assigns every region to a known act', () => {
     for (const g of parsed.data.regions) expect(parsed.data.acts).toContain(g.act)
