@@ -9,6 +9,7 @@
   import BackupDialog from './lib/BackupDialog.svelte'
   import SyncDialog from './lib/SyncDialog.svelte'
   import GuidesDialog from './lib/GuidesDialog.svelte'
+  import LineupDialog from './lib/LineupDialog.svelte'
   import Icon from './lib/Icon.svelte'
   import { reconcileNow, resumeSync, sync, syncNow } from './lib/sync.svelte'
 
@@ -21,6 +22,7 @@
   let backup: BackupDialog
   let syncDlg: SyncDialog
   let guides: GuidesDialog
+  let lineup: LineupDialog
 
   onMount(async () => {
     resumeSync()
@@ -77,6 +79,7 @@
         <Icon name="sync" /><span>Sync{#if sync.link}<span class="dot" class:off={sync.status.state === 'offline'} aria-hidden="true"></span>{/if}</span>
       </button>
       <button type="button" onclick={() => party.open()} title="Add characters beyond the built-in roster"><Icon name="users" />Characters</button>
+      <button type="button" onclick={() => lineup.open()} title="Choose the lineup of four and assign gear per act"><Icon name="lineup" />Lineup</button>
       <button type="button" onclick={() => guides.open()} title="Save the build guides as PDF"><Icon name="guide" />Guides</button>
       <button type="button" onclick={() => backup.open()}><Icon name="backup" />Backup</button>
     </div>
@@ -145,3 +148,4 @@
 <BackupDialog bind:this={backup} />
 <SyncDialog bind:this={syncDlg} />
 <GuidesDialog bind:this={guides} />
+<LineupDialog bind:this={lineup} />
