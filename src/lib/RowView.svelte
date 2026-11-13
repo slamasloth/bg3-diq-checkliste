@@ -2,7 +2,8 @@
   import type { Row } from './schema'
   import { isItem, isMissable } from './logic'
   import { characterColor, characterInitials, characterLabel, type CharacterGroup } from './roster'
-  import Icon from './Icon.svelte'
+  import Badge from './Badge.svelte'
+  import { isMaybeMissable, VERIFICATION_LABEL } from './badges'
   import type { IconName } from './icons'
 
   interface Props {
@@ -26,6 +27,7 @@
   const VERIFICATION_ICON: Record<string, IconName> = {
     sourced: 'sourced', candidate: 'candidate', unverified: 'unverified', conflict: 'conflict', separate: 'separate',
   }
+  const open = $derived(!checked && isMissable(row)) // still-open missable: orange edge in addition to the badge
   const shortMod = (m: string) => (m.length > 28 ? m.slice(0, 26) + '…' : m)
   const slug = (s: string) => s.replace(/\s+/g, '')
 
@@ -50,7 +52,7 @@
   const hasDetail = $derived(details.length > 0 || isItem(row) || (row.origin !== 'base' && Boolean(row.url)))
 </script>
 
-  <li class="row" class:done={checked} style:padding-left="{8 + row.depth * 16}px">
+  <li class="row" class:done={checked} class:mark={open} class:item={isItem(row)} style:padding-left="{8 + row.depth * 16}px">
     <label class="cbwrap">
       <input
         class="cb"
@@ -74,12 +76,14 @@
             <span aria-hidden="true">{characterInitials(who)}</span><span class="sr-only">Assigned to {characterLabel(who)}</span>
           </span>
         {/if}
-        {#if showAct && row.act}<span class="b" title="Act according to the source">{row.act}</span>{/if}
-        {#if row.rarity}<span class="b ra-{slug(row.rarity)}">{row.rarity}</span>{/if}
-        {#if row.origin !== 'base'}<span class="b mod" title={row.mod}><Icon name="mod" />{shortMod(row.mod ?? 'Mod')}</span>{/if}
-        {#if row.verification !== 'sourced'}<span class="b v-{row.verification}"><Icon name={VERIFICATION_ICON[row.verification] ?? 'candidate'} />{row.verification}</span>{/if}
-        {#if isMissable(row)}<span class="b miss"><Icon name="warn" />Missable</span>{/if}
-        {#if row.locMapping}<span class="b" title="Area only approximately assigned"><Icon name="pin" />Area approx.</span>{/if}
+        {#if isMissable(row)}<Badge kind="miss" icon="warn">Missable</Badge>
+        {:else if isMaybeMissable(row)}<Badge kind="maybe" icon="warn" title={row.missableText}>May be missable</Badge>{/if}
+        {#if row.verification === 'sourced'}<Badge kind="ok" icon="sourced">{VERIFICATION_LABEL.sourced}</Badge>
+        {:else}<Badge kind={row.verification === 'candidate' ? 'cand' : row.verification === 'separate' ? 'info' : 'bad'} icon={VERIFICATION_ICON[row.verification] ?? 'candidate'}>{VERIFICATION_LABEL[row.verification] ?? row.verification}</Badge>{/if}
+        {#if row.rarity}<span class="rarity ra-{slug(row.rarity)}">{row.rarity}</span>{/if}
+        {#if row.origin !== 'base'}<Badge kind="mod" icon="mod" title={row.mod}>{shortMod(row.mod ?? 'Mod')}</Badge>{/if}
+        {#if showAct && row.act}<Badge title="Act according to the source">{row.act}</Badge>{/if}
+        {#if row.locMapping}<Badge icon="pin" title="Area only approximately assigned">Area approx.</Badge>{/if}
       </div>
     </div>
     <div class="tools">
