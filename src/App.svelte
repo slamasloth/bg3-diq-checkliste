@@ -1,22 +1,21 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { ChecklistSchema, type Checklist } from './lib/schema'
-  import { countRegion, hasActiveFilter, noFilters, rowPasses } from './lib/logic'
-  import { allCharacters, app, characterGroups, isChecked, memberOf, setActiveAct } from './lib/store.svelte'
-  import { characterLabel } from './lib/roster'
-  import RegionView from './lib/RegionView.svelte'
+  import { allCharacters, app, characterGroups, setActiveAct } from './lib/store.svelte'
+  import { initNav, nav, saveNav } from './lib/nav.svelte'
+  import ChecklistView from './lib/ChecklistView.svelte'
+  import MenuList from './lib/MenuList.svelte'
+  import SyncChip from './lib/SyncChip.svelte'
+  import TabBar from './lib/TabBar.svelte'
   import PartyDialog from './lib/PartyDialog.svelte'
   import BackupDialog from './lib/BackupDialog.svelte'
   import SyncDialog from './lib/SyncDialog.svelte'
   import GuidesDialog from './lib/GuidesDialog.svelte'
   import LineupDialog from './lib/LineupDialog.svelte'
-  import Icon from './lib/Icon.svelte'
-  import { reconcileNow, resumeSync, sync, syncNow } from './lib/sync.svelte'
+  import { reconcileNow, resumeSync, syncNow } from './lib/sync.svelte'
 
   let data = $state<Checklist | null>(null)
   let error = $state('')
-  let filters = $state(noFilters())
-  let showFilters = $state(false)
   let act = $state('Act 1')
   let party: PartyDialog
   let backup: BackupDialog
@@ -25,15 +24,15 @@
   let lineup: LineupDialog
 
   onMount(async () => {
+    initNav()
     resumeSync()
     window.addEventListener('online', syncNow)
     document.addEventListener('visibilitychange', reconcileNow)
-    // Keep keyboard focus clear of the pinned bar (WCAG 2.4.11): tell the browser how tall it is.
-    // On phones `.top` uses display: contents (zero height) and only `.tabs` is pinned, so skip boxes without height.
-    const pinned = () => [document.querySelector('.top'), document.querySelector('.tabs')]
-      .find((el) => el && getComputedStyle(el).position === 'sticky' && el.getBoundingClientRect().height > 0)
-    const measure = () =>
-      document.documentElement.style.setProperty('--sticky-h', `${Math.round(pinned()?.getBoundingClientRect().height ?? 0)}px`)
+    // Keep keyboard focus clear of the pinned act bar (WCAG 2.4.11): tell the browser how tall it is.
+    const measure = () => {
+      const el = document.querySelector('.pinned')
+      document.documentElement.style.setProperty('--sticky-h', `${Math.round(el?.getBoundingClientRect().height ?? 0)}px`)
+    }
     new ResizeObserver(measure).observe(document.body)
     window.addEventListener('resize', measure)
     try {
@@ -48,101 +47,65 @@
     }
   })
 
-  const regions = $derived(data?.regions.filter((g) => g.act === act) ?? [])
-  const tabCounts = $derived.by(() => {
-    const out: Record<string, [number, number]> = {}
-    for (const a of data?.acts ?? []) {
-      let d = 0, t = 0
-      for (const g of data!.regions) if (g.act === a) { const c = countRegion(g, isChecked); d += c[0]; t += c[1] }
-      out[a] = [d, t]
-    }
-    return out
-  })
-  const lookup = { isChecked, memberOf }
-  /** Number of entries currently shown in this act; also announced to screen readers. */
-  const shown = $derived(
-    regions.reduce((n, g) => n + [...g.base, ...g.mod].filter((r) => rowPasses(r, g.title, filters, lookup)).length, 0),
-  )
   const pick = (a: string) => { act = a; setActiveAct(a); window.scrollTo(0, 0) }
   // Reset the character filter if the selected (custom) character was removed.
   $effect(() => {
-    if (filters.member && filters.member !== '-' && !allCharacters().some((p) => p.id === filters.member)) filters.member = ''
+    if (nav.filters.member && nav.filters.member !== '-' && !allCharacters().some((p) => p.id === nav.filters.member)) nav.filters.member = ''
   })
+  // Remember tab, region and filters (the view state only; never synchronised).
+  $effect(() => { saveNav() })
+
+  const TITLES = { checklist: 'Checklist', party: 'Party', more: 'More' } as const
+  const inRegion = $derived(nav.tab === 'checklist' && nav.region !== null && data?.regions.some((g) => g.id === nav.region))
 </script>
 
-<header class="top">
-  <div class="bar">
-    <h1><span class="eyebrow">BG3 DIQ R150</span> Checklist</h1>
-    <div class="actions">
-      <button type="button" id="btnFilter" aria-expanded={showFilters} aria-controls="filters" onclick={() => (showFilters = !showFilters)}><Icon name="filter" />Filters</button>
-      <button type="button" onclick={() => syncDlg.open()} title="Share progress between devices">
-        <Icon name="sync" /><span>Sync{#if sync.link}<span class="dot" class:off={sync.status.state === 'offline'} aria-hidden="true"></span>{/if}</span>
-      </button>
-      <button type="button" onclick={() => party.open()} title="Add characters beyond the built-in roster"><Icon name="users" />Characters</button>
-      <button type="button" onclick={() => lineup.open()} title="Choose the lineup of four and assign gear per act"><Icon name="lineup" />Lineup</button>
-      <button type="button" onclick={() => guides.open()} title="Save the build guides as PDF"><Icon name="guide" />Guides</button>
-      <button type="button" onclick={() => backup.open()}><Icon name="backup" />Backup</button>
+<div class="app">
+  <header class="topbar">
+    <div>
+      <span class="eyebrow">BG3 DIQ R150</span>
+      {#if inRegion}<p class="apptitle">Checklist</p>{:else}<h1>{TITLES[nav.tab]}</h1>{/if}
     </div>
-  </div>
-  {#if data}
-    <nav class="tabs" aria-label="Acts">
-      {#each data.acts as a (a)}
-        <button type="button" class="tab" aria-current={a === act ? 'true' : undefined} onclick={() => pick(a)}>
-          {a}<small><span class="sr-only"> – </span>{tabCounts[a]?.[0]}/{tabCounts[a]?.[1]}<span class="sr-only"> done</span></small>
-        </button>
-      {/each}
-    </nav>
-    <div class="filters" class:show={showFilters} id="filters">
-      <input type="search" placeholder="Search (name, place, mod)" aria-label="Search" bind:value={filters.query} />
-      <select aria-label="Status" bind:value={filters.status}>
-        <option value="all">All</option><option value="open">Open</option><option value="done">Done</option>
-      </select>
-      <select aria-label="Source" bind:value={filters.source}>
-        <option value="all">Base + mods</option><option value="base">Base only (vanilla)</option><option value="mod">Mod additions only</option>
-      </select>
-      <select aria-label="Mod" bind:value={filters.mod}>
-        <option value="">All mods</option>
-        {#each data.mods as m (m)}<option>{m}</option>{/each}
-      </select>
-      <select aria-label="Verification" bind:value={filters.verification}>
-        <option value="">Any status</option>
-        {#each ['sourced', 'candidate', 'unverified', 'conflict', 'separate'] as v (v)}<option>{v}</option>{/each}
-      </select>
-      <select aria-label="Character" bind:value={filters.member}>
-        <option value="">All characters</option><option value="-">Unassigned</option>
-        {#each characterGroups() as g (g.label)}
-          <optgroup label={g.label}>
-            {#each g.list as p (p.id)}<option value={p.id}>{characterLabel(p)}</option>{/each}
-          </optgroup>
-        {/each}
-      </select>
-      <label class="chk"><input type="checkbox" bind:checked={filters.missableOnly} /> Missable only</label>
-      <label class="chk"><input type="checkbox" bind:checked={filters.itemsOnly} /> Items only</label>
-    </div>
-  {/if}
-</header>
+    <SyncChip onclick={() => syncDlg.open()} />
+  </header>
 
-<main>
-  <!-- Small status message instead of a live region around 500+ rows -->
-  <p class="sr-only" role="status">{data ? `${shown} entries shown in ${act}.` : ''}</p>
-  {#if error}
-    <p class="empty" role="alert">Error: {error}</p>
-  {:else if !data}
-    <p class="empty">Loading data …</p>
-  {:else}
-    {#each regions as g (g.id)}
-      <RegionView region={g} {filters} groups={characterGroups()} forceOpen={Boolean(filters.query)} />
-    {/each}
-    {#if hasActiveFilter(filters) && shown === 0}<p class="empty">No entries match these filters.</p>{/if}
-  {/if}
-</main>
-
-<footer class="foot">
   {#if !app.storageOk}
-    <span role="alert">Saving in the browser is not possible: changes will be lost when you close the page. Please download a backup.</span>
+    <p class="banner bad" role="alert">Saving in the browser is not possible: changes will be lost when you close the page. Please download a backup.</p>
   {/if}
-  <span>Source status is not in-game verification.{#if data} Data as of {data.dataDate} ({data.dataStage}).{/if}</span>
-</footer>
+
+  <main>
+    {#if nav.tab === 'checklist'}
+      {#if error}
+        <p class="empty" role="alert">Error: {error}</p>
+      {:else if !data}
+        <p class="empty" role="status">Loading data …</p>
+      {:else}
+        <ChecklistView {data} {act} groups={characterGroups()} onPickAct={pick} />
+      {/if}
+    {:else if nav.tab === 'party'}
+      <div class="page">
+        <MenuList items={[
+          { label: 'Characters', hint: 'Add characters beyond the built-in roster', icon: 'users', onselect: () => party.open() },
+          { label: 'Lineup', hint: 'Choose the lineup of four and assign gear per act', icon: 'lineup', onselect: () => lineup.open() },
+        ]} />
+      </div>
+    {:else}
+      <div class="page">
+        <MenuList items={[
+          { label: 'Party sync', hint: 'Share progress between devices', icon: 'sync', onselect: () => syncDlg.open() },
+          { label: 'Build guides', hint: 'Save the build guides as PDF', icon: 'guide', onselect: () => guides.open() },
+          { label: 'Backup', hint: 'Download or restore your progress', icon: 'backup', onselect: () => backup.open() },
+        ]} />
+        <section class="about" aria-labelledby="about-t">
+          <h2 id="about-t">About</h2>
+          <p class="meta">Source status is not in-game verification.{#if data} Data as of {data.dataDate} ({data.dataStage}).{/if}</p>
+          <p class="meta">Text size follows your device or browser setting.</p>
+        </section>
+      </div>
+    {/if}
+  </main>
+</div>
+
+<TabBar />
 
 <PartyDialog bind:this={party} />
 <BackupDialog bind:this={backup} />
