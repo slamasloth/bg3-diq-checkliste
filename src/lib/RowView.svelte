@@ -18,8 +18,12 @@
     onNote: (id: string, note: string) => void
     /** Show the act named by the source (used in the "Unplaced" tab, where the area is unknown). */
     showAct?: boolean
+    /** Selection mode (S3): round select box instead of the done box; details and assignment are hidden. */
+    selectMode?: boolean
+    selected?: boolean
+    onSelect?: (row: Row, on: boolean) => void
   }
-  let { row, checked, member, note, groups, onToggle, onAssign, onNote, showAct = false }: Props = $props()
+  let { row, checked, member, note, groups, onToggle, onAssign, onNote, showAct = false, selectMode = false, selected = false, onSelect }: Props = $props()
   let showDetail = $state(false)
 
   /** The character this item is assigned to (for the coloured mark next to the title). */
@@ -52,15 +56,25 @@
   const hasDetail = $derived(details.length > 0 || isItem(row) || (row.origin !== 'base' && Boolean(row.url)))
 </script>
 
-  <li class="row" class:done={checked} class:mark={open} class:item={isItem(row)} style:padding-left="{8 + row.depth * 16}px">
+  <li class="row" class:done={checked} class:mark={open} class:item={isItem(row)} class:sel={selectMode} class:picked={selectMode && selected} style:padding-left="{8 + row.depth * 16}px">
     <label class="cbwrap">
-      <input
-        class="cb"
-        type="checkbox"
-        {checked}
-        aria-label="Done: {row.name ?? row.text}"
-        onchange={(e) => onToggle(row.id, e.currentTarget.checked)}
-      />
+      {#if selectMode}
+        <input
+          class="cb"
+          type="checkbox"
+          checked={selected}
+          aria-label="Select: {row.name ?? row.text}"
+          onchange={(e) => onSelect?.(row, e.currentTarget.checked)}
+        />
+      {:else}
+        <input
+          class="cb"
+          type="checkbox"
+          {checked}
+          aria-label="Done: {row.name ?? row.text}"
+          onchange={(e) => onToggle(row.id, e.currentTarget.checked)}
+        />
+      {/if}
     </label>
     <div class="txt">
       <span class="title">
@@ -86,6 +100,7 @@
         {#if row.locMapping}<Badge icon="pin" title="Area only approximately assigned">Area approx.</Badge>{/if}
       </div>
     </div>
+    {#if !selectMode}
     <div class="tools">
       {#if isItem(row)}
         <select
@@ -106,7 +121,8 @@
         <button type="button" class="dt" aria-expanded={showDetail} aria-label="Details" onclick={() => (showDetail = !showDetail)}>⋯</button>
       {/if}
     </div>
-    {#if showDetail}
+    {/if}
+    {#if showDetail && !selectMode}
       <div class="detail">
         <dl>
           {#each details as [k, v] (k)}<dt>{k}</dt><dd>{v}</dd>{/each}

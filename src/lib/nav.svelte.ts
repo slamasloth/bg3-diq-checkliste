@@ -6,13 +6,14 @@ import type { Tier } from './counts'
  * and never synchronised: it only restores the screen the player left. A region is a history entry, so the browser's
  * back button closes it.
  */
-export type Tab = 'checklist' | 'party' | 'more'
-const TABS: Tab[] = ['checklist', 'party', 'more']
+export type Tab = 'today' | 'checklist' | 'party' | 'more'
+const TABS: Tab[] = ['today', 'checklist', 'party', 'more']
 const KEY = 'bg3diq.nav'
 
-export const nav: { tab: Tab; region: string | null; filters: Filters; tier: Tier } = $state({
-  tab: 'checklist',
+export const nav: { tab: Tab; region: string | null; lastRegion: string | null; filters: Filters; tier: Tier } = $state({
+  tab: 'today',
   region: null,
+  lastRegion: null,
   filters: noFilters(),
   tier: 'any',
 })
@@ -25,6 +26,7 @@ function restore(): void {
     const o = JSON.parse(raw) as Record<string, unknown>
     if (typeof o.tab === 'string' && (TABS as string[]).includes(o.tab)) nav.tab = o.tab as Tab
     if (typeof o.region === 'string' && o.region.length < 200) nav.region = o.region
+    if (typeof o.lastRegion === 'string' && o.lastRegion.length < 200) nav.lastRegion = o.lastRegion
     if (o.tier === 'maybe' || o.tier === 'not') nav.tier = o.tier
     const f = o.filters as Partial<Filters> | undefined
     if (f && typeof f === 'object') {
@@ -48,7 +50,7 @@ export function saveNav(): void {
   try {
     const f = nav.filters
     const filters = { status: f.status, source: f.source, mod: f.mod, verification: f.verification, member: f.member, missableOnly: f.missableOnly, itemsOnly: f.itemsOnly }
-    localStorage.setItem(KEY, JSON.stringify({ tab: nav.tab, region: nav.region, tier: nav.tier, filters }))
+    localStorage.setItem(KEY, JSON.stringify({ tab: nav.tab, region: nav.region, lastRegion: nav.lastRegion, tier: nav.tier, filters }))
   } catch {
     /* storage unavailable: the view just starts fresh next time */
   }
@@ -74,6 +76,7 @@ export function setTab(t: Tab): void {
 
 export function openRegion(id: string): void {
   nav.region = id
+  nav.lastRegion = id // "Continue where you left off" on Today
   history.pushState({ region: id }, '')
   window.scrollTo(0, 0)
 }

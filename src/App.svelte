@@ -1,9 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { ChecklistSchema, type Checklist } from './lib/schema'
-  import { allCharacters, app, characterGroups, setActiveAct } from './lib/store.svelte'
+  import { allCharacters, app, characterGroups, isChecked, setActiveAct } from './lib/store.svelte'
   import { initNav, nav, saveNav } from './lib/nav.svelte'
   import ChecklistView from './lib/ChecklistView.svelte'
+  import TodayView from './lib/TodayView.svelte'
+  import Toast from './lib/Toast.svelte'
+  import ActionBar from './lib/ActionBar.svelte'
+  import { selection } from './lib/groupActions.svelte'
+  import { openMissables } from './lib/counts'
   import MenuList from './lib/MenuList.svelte'
   import SyncChip from './lib/SyncChip.svelte'
   import TabBar from './lib/TabBar.svelte'
@@ -55,7 +60,9 @@
   // Remember tab, region and filters (the view state only; never synchronised).
   $effect(() => { saveNav() })
 
-  const TITLES = { checklist: 'Checklist', party: 'Party', more: 'More' } as const
+  const TITLES = { today: 'Today', checklist: 'Checklist', party: 'Party', more: 'More' } as const
+  const todayCount = $derived(data ? openMissables(data.regions, act, isChecked) : 0)
+  const selecting = $derived(selection.on && nav.tab === 'checklist')
   const inRegion = $derived(nav.tab === 'checklist' && nav.region !== null && data?.regions.some((g) => g.id === nav.region))
 </script>
 
@@ -73,7 +80,15 @@
   {/if}
 
   <main>
-    {#if nav.tab === 'checklist'}
+    {#if nav.tab === 'today'}
+      {#if error}
+        <p class="empty" role="alert">Error: {error}</p>
+      {:else if !data}
+        <p class="empty" role="status">Loading data …</p>
+      {:else}
+        <TodayView {data} {act} groups={characterGroups()} onPickAct={pick} />
+      {/if}
+    {:else if nav.tab === 'checklist'}
       {#if error}
         <p class="empty" role="alert">Error: {error}</p>
       {:else if !data}
@@ -105,7 +120,8 @@
   </main>
 </div>
 
-<TabBar />
+{#if selecting}<ActionBar />{:else}<TabBar {todayCount} />{/if}
+<Toast />
 
 <PartyDialog bind:this={party} />
 <BackupDialog bind:this={backup} />

@@ -55,3 +55,20 @@ export function visibleRows(g: Region, f: Filters, extra: Tier, l: Lookup): { ba
     mod: g.mod.filter((r) => passes(r, g.title, f, extra, l)),
   }
 }
+
+/** The next still-open missables of an act, in checklist order (regions as in the data, base before mod). */
+export function nextMissables(regions: Region[], act: string, isChecked: (id: string) => boolean, n: number): { row: Row; region: Region }[] {
+  const out: { row: Row; region: Region }[] = []
+  for (const g of regions) {
+    if (g.act !== act) continue
+    for (const row of [...g.base, ...g.mod]) {
+      if (out.length >= n) return out
+      if (!isChecked(row.id) && isMissable(row)) out.push({ row, region: g })
+    }
+  }
+  return out
+}
+
+/** Open missables of an act (counter at the Today tab). */
+export const openMissables = (regions: Region[], act: string, isChecked: (id: string) => boolean): number =>
+  regions.reduce((n, g) => (g.act === act ? n + regionStats(g, isChecked).openMissable : n), 0)
