@@ -16,6 +16,7 @@
   import BackupDialog from './lib/BackupDialog.svelte'
   import SyncDialog from './lib/SyncDialog.svelte'
   import GuidesDialog from './lib/GuidesDialog.svelte'
+  import GuidesTab from './lib/GuidesTab.svelte'
   import LineupDialog from './lib/LineupDialog.svelte'
   import { reconcileNow, resumeSync, syncNow } from './lib/sync.svelte'
 
@@ -60,7 +61,7 @@
   // Remember tab, region and filters (the view state only; never synchronised).
   $effect(() => { saveNav() })
 
-  const TITLES = { today: 'Today', checklist: 'Checklist', party: 'Party', more: 'More' } as const
+  const TITLES = { today: 'Today', checklist: 'Checklist', party: 'Party', guides: 'Guides', more: 'More' } as const
   const todayCount = $derived(data ? openMissables(data.regions, act, isChecked) : 0)
   const selecting = $derived(selection.on && nav.tab === 'checklist')
   const inRegion = $derived(nav.tab === 'checklist' && nav.region !== null && data?.regions.some((g) => g.id === nav.region))
@@ -70,7 +71,7 @@
   <header class="topbar">
     <div>
       <span class="eyebrow">BG3 DIQ R150</span>
-      {#if inRegion}<p class="apptitle">Checklist</p>{:else}<h1>{TITLES[nav.tab]}</h1>{/if}
+      {#if inRegion}<p class="apptitle">Checklist</p>{:else if nav.tab === 'guides' && nav.guide}<p class="apptitle">Guides</p>{:else}<h1>{TITLES[nav.tab]}</h1>{/if}
     </div>
     <SyncChip onclick={() => syncDlg.open()} />
   </header>
@@ -103,11 +104,13 @@
           { label: 'Lineup', hint: 'Choose the lineup of four and assign gear per act', icon: 'lineup', onselect: () => lineup.open() },
         ]} />
       </div>
+    {:else if nav.tab === 'guides'}
+      <GuidesTab onPdf={(id) => guides.open([id])} />
     {:else}
       <div class="page">
         <MenuList items={[
           { label: 'Party sync', hint: 'Share progress between devices', icon: 'sync', onselect: () => syncDlg.open() },
-          { label: 'Build guides', hint: 'Save the build guides as PDF', icon: 'guide', onselect: () => guides.open() },
+          { label: 'Guides as PDF', hint: 'Save build guides as a PDF file (reading is in the Guides tab)', icon: 'guide', onselect: () => guides.open() },
           { label: 'Backup', hint: 'Download or restore your progress', icon: 'backup', onselect: () => backup.open() },
         ]} />
         <section class="about" aria-labelledby="about-t">

@@ -10,13 +10,17 @@
   let last = $state<{ name: string; url: string } | null>(null)
   let look = $state<'screen' | 'print'>('screen')
 
-  export async function open() {
+  /** `ids` preselects builds (the Guides tab passes the open build); default is the fixed core. */
+  export async function open(ids?: string[]) {
     msg = ''
     dlg.showModal()
-    if (pack) return
+    if (pack) {
+      if (ids) selected = [...ids]
+      return
+    }
     try {
       pack = await loadBuildPack(`${import.meta.env.BASE_URL}data/builds.pack.json`)
-      selected = [...pack.party.fixed]
+      selected = ids ? [...ids] : [...pack.party.fixed]
     } catch (e) {
       msg = 'Error: ' + (e instanceof Error ? e.message : String(e))
     }

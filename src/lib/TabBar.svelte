@@ -9,6 +9,7 @@
     { id: 'today', label: 'Today', icon: 'today' },
     { id: 'checklist', label: 'Checklist', icon: 'list' },
     { id: 'party', label: 'Party', icon: 'users' },
+    { id: 'guides', label: 'Guides', icon: 'guide' },
     { id: 'more', label: 'More', icon: 'more' },
   ]
 </script>
