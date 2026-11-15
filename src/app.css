@@ -349,6 +349,30 @@ body:has(.actionbar) .toastzone { bottom: calc(var(--btn) + var(--s5) + env(safe
 .slot .inh .iname { font-style: italic; }
 .slot .iname { overflow-wrap: anywhere; font-weight: 700; }
 .slot a { color: var(--accent); display: inline-block; min-height: var(--tap); line-height: var(--tap); }
+
+/* Guides: rarity colour (always with the rarity word), item tile, location, spell grade */
+.r-common { --rc: var(--r-common); } .r-unc { --rc: var(--r-unc); } .r-rare { --rc: var(--r-rare); } .r-vr { --rc: var(--r-vr); } .r-leg { --rc: var(--r-leg); } .r-none { --rc: var(--text-2); }
+.slot .iname { color: var(--rc, var(--text)); display: flex; align-items: center; gap: var(--s2); }
+.slot .iname a { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.item-ic { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: var(--r-ctl); border: 1px solid var(--rc, var(--line)); background: var(--sunken); color: var(--rc, var(--text-2)); }
+.item-ic .ic { width: 1.5rem; height: 1.5rem; }
+.slot .tags { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; margin: 4px 0; }
+.rar { font: 700 var(--t-caption)/1.2 var(--f-sans); color: var(--rc, var(--text-2)); border: 1px solid var(--rc, var(--line)); border-radius: var(--r-badge); padding: 2px 8px; }
+.where { margin-top: 4px; }
+.where summary { display: flex; align-items: center; gap: var(--s2); min-height: var(--tap); cursor: pointer; color: var(--text); list-style: none; }
+.where summary::-webkit-details-marker { display: none; }
+.where summary .ic { flex: none; width: 1.25rem; height: 1.25rem; color: var(--accent); }
+.where summary .w1 { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.where summary .more { flex: none; font: 700 var(--t-caption)/1 var(--f-sans); color: var(--text-2); border: 1px solid var(--line); border-radius: var(--r-badge); padding: 4px 8px; }
+.where[open] summary { color: var(--accent-hi); }
+.where ul { list-style: none; margin: 0 0 var(--s2); padding: 0 0 0 var(--s3); border-left: 2px solid var(--line-soft); display: grid; gap: var(--s2); }
+.where li p { margin: 0; overflow-wrap: anywhere; }
+.where code { font-size: .875em; color: var(--text-2); overflow-wrap: anywhere; }
+.where a { min-height: 0; line-height: inherit; }
+.sp { --sc: var(--text); color: var(--sc); font-weight: 700; white-space: nowrap; }
+.sp.c { --sc: #7fd6cf; } .sp.low { --sc: #8fbfff; } .sp.mid { --sc: #c9a4ff; } .sp.high { --sc: #ff9fcf; }
+.sp .ic { width: .85em; height: .85em; margin-right: .2em; vertical-align: -.1em; stroke-width: 2.2; }
+.sp .sg { font: 700 .7em/1 var(--f-sans); margin-left: .25em; padding: 1px 4px; border: 1px solid currentColor; border-radius: 4px; vertical-align: .15em; }
 .set { display: grid; gap: var(--s2); }
 .set dl { margin: 0; display: grid; grid-template-columns: minmax(0, 8rem) minmax(0, 1fr); gap: var(--s1) var(--s3); }
 .set dt { color: var(--text-3); font-size: var(--t-label); }

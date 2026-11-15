@@ -84,6 +84,8 @@ export const BuildPackSchema = z.object({
   slots: z.array(SlotKey).length(12),
   builds: z.array(BuildSchema).length(12),
   items: z.record(z.string(), ItemSchema),
+  /** Spell grade (0 = cantrip) per display name used in the guide texts; from the installed class spell lists. */
+  spellLevels: z.record(z.string(), z.number().int().min(0).max(9)),
   gaps: z.array(z.object({ id: z.string(), status: z.string(), title: z.string() })),
   ingameFindings: z.array(z.object({ id: z.string(), claim: z.string(), build: z.string(), totalLevel: z.number().int(), result: z.string(), date: z.string(), by: z.string() })),
   itemAliases: z.record(z.string(), z.object({ to: z.string(), item: z.string(), reason: z.string() })),

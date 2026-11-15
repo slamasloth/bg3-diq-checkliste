@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { BuildPackSchema } from './buildpack'
-import { allClasses, endgameViews, filterEntries, gearViews, levelViews, listEntries, missablesOf, openPointsOf, orderedBuilds, verificationBadge } from './guideModel'
+import { allClasses, endgameViews, filterEntries, gearViews, gradeBand, gradeLabel, levelViews, listEntries, locationsOf, missablesOf, openPointsOf, orderedBuilds, rarityKey, readableHolder, spellParts, verificationBadge } from './guideModel'
 
 const pack = BuildPackSchema.parse(JSON.parse(readFileSync('public/data/builds.pack.json', 'utf-8')))
 
@@ -65,6 +65,45 @@ describe('Guides tab model (data → view)', () => {
       expect(missablesOf(b)).toHaveLength(b.missables.length)
       expect(openPointsOf(b)).toHaveLength(b.openPoints.length)
     }
+  })
+  it('shows a location for every option whose item has any; items without one stay empty (gap), nothing is invented', () => {
+    let withLoc = 0, without = 0
+    for (const b of pack.builds) for (const a of gearViews(pack, b)) for (const s of a.slots) for (const o of s.options) {
+      const it = o.item!
+      const n = it.found.list.filter((l) => l.place).length + it.found.catalog.filter((c) => c.region || c.place).length + it.found.script.length + it.found.base.length
+      expect(o.locations).toHaveLength(n)
+      if (n) withLoc++; else without++
+      expect(o.origin).toBe(it.source === 'fed' ? 'Mod item' : it.source === 'base' ? 'Base game' : null)
+    }
+    expect(withLoc).toBeGreaterThan(without)
+    expect(without).toBeGreaterThan(0)
+  })
+  it('gives mod (FED) items a location from the installed game files or lists', () => {
+    const fed = Object.values(pack.items).filter((i) => i.source === 'fed' && (i.found.script.length || i.found.list.length))
+    expect(fed.length).toBeGreaterThan(100)
+    const l = locationsOf(fed.find((i) => i.found.script.length)!)
+    expect(l[0].source).toMatch(/Game files|Author list/)
+    expect(readableHolder('CONT_GEN_Chest_Heavy_A_003')).toBe('Chest Heavy A 003')
+    expect(readableHolder('S_CRE_IntelligenceOfficer01')).toBe('Intelligence Officer01')
+  })
+  it('maps rarity as stated and never guesses a missing one', () => {
+    expect(rarityKey('Very Rare')).toBe('vr')
+    expect(rarityKey('Legendary')).toBe('leg')
+    expect(rarityKey(null)).toBe('none')
+    expect(rarityKey('weird')).toBe('none')
+  })
+  it('marks spells by exact name with their grade and leaves other text untouched', () => {
+    const parts = spellParts('Cantrip Fire Bolt, dazu Fireball → und Shielding', { 'Fire Bolt': 0, Fireball: 3, Shield: 1 })
+    expect(parts.filter((p) => p.spell).map((p) => [p.text, p.spell!.grade])).toEqual([['Fire Bolt', 0], ['Fireball', 3]])
+    expect(parts.map((p) => p.text).join('')).toBe('Cantrip Fire Bolt, dazu Fireball → und Shielding')
+    expect(gradeBand(0)).toBe('c')
+    expect(gradeBand(3)).toBe('mid')
+    expect(gradeLabel(0)).toBe('Cantrip')
+  })
+  it('finds spells in the real level texts', () => {
+    const du = pack.builds.find((b) => b.id === 'dark_urge')!
+    const hits = levelViews(du).flatMap((l) => spellParts(l.text, pack.spellLevels).filter((p) => p.spell))
+    expect(hits.length).toBeGreaterThan(5)
   })
   it('filters by class and text', () => {
     const e = listEntries(pack)

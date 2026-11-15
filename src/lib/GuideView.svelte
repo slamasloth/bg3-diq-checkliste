@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { BuildPack, PackBuild } from './buildpack'
   import { closeGuide } from './nav.svelte'
-  import { endgameViews, gearViews, levelViews, missablesOf, openPointsOf, proseOf, SECTIONS, sourcesOf, verificationBadge } from './guideModel'
+  import { endgameViews, gearViews, gradeBand, gradeLabel, levelViews, missablesOf, openPointsOf, proseOf, SECTIONS, sourcesOf, spellParts, verificationBadge } from './guideModel'
   import { paragraphs } from './guidePdf'
   import type { Block } from './guidePdf'
   import Badge from './Badge.svelte'
@@ -27,13 +27,17 @@
   const pickSheet = (s: Sheet) => { sheet = s; window.scrollTo(0, 0) }
 </script>
 
+{#snippet rich(text: string)}
+  {#each spellParts(text, pack.spellLevels) as part, i (i)}{#if part.spell}<span class="sp {gradeBand(part.spell.grade)}"><Icon name="spell" />{part.text}<span class="sg" aria-hidden="true">{part.spell.grade === 0 ? 'C' : part.spell.grade}</span><span class="sr-only"> ({gradeLabel(part.spell.grade)} spell)</span></span>{:else}{part.text}{/if}{/each}
+{/snippet}
+
 {#snippet prose(bl: Block[])}
   <div class="prose">
     {#each bl as p, i (i)}
       {#if p.kind === 'field'}
-        <p class="field-line"><span class="fk">{p.key === 'WIRKUNG MIT FEATS OVERHAUL' ? 'WIRKUNG' : p.key}</span> {p.text}</p>
+        <p class="field-line"><span class="fk">{p.key === 'WIRKUNG MIT FEATS OVERHAUL' ? 'WIRKUNG' : p.key}</span> {@render rich(p.text)}</p>
       {:else}
-        <p>{p.text}</p>
+        <p>{@render rich(p.text)}</p>
       {/if}
     {/each}
   </div>
@@ -69,7 +73,7 @@
           <span class="lv"><span class="sr-only">Level </span>{l.totalLevel}</span>
           <div class="lb">
             <p class="lc"><strong>{l.cls}</strong> <span class="meta">class level {l.classLevel}</span></p>
-            {#if l.text}<p>{l.text}</p>{:else if l.feats.length === 0}{@render gap('no entry for this level')}{/if}
+            {#if l.text}<p>{@render rich(l.text)}</p>{:else if l.feats.length === 0}{@render gap('no entry for this level')}{/if}
             {#if l.feats.length}
               <p class="feats">
                 {#each l.feats as f, i (i)}
@@ -140,12 +144,34 @@
                       {#if !o.item}
                         {@render gap('item not in the package')}
                       {:else}
-                        <p class="iname">
+                        <p class="iname r-{o.rarityKey}">
+                          <span class="item-ic"><Icon name={s.icon} /></span>
                           {#if o.wiki}<a href={o.wiki} target="_blank" rel="noopener">{o.name}<span class="sr-only"> (bg3.wiki, opens in a new tab)</span></a>{:else}{o.name}{/if}
                           {#if o.inherited}<span class="meta"> · carried over</span>{/if}
                         </p>
-                        {#if o.notes}<p class="meta">{o.notes}</p>{/if}
-                        {#if o.badge}<Badge kind={o.badge.kind} icon={o.badge.icon}>{o.badge.label}</Badge>{/if}
+                        <p class="tags">
+                          <span class="rar r-{o.rarityKey}">{o.rarity ?? 'Rarity not stated'}</span>
+                          {#if o.origin}<Badge kind="mod" icon={o.origin === 'Mod item' ? 'mod' : 'sourced'}>{o.origin}</Badge>{/if}
+                          {#if o.badge}<Badge kind={o.badge.kind} icon={o.badge.icon}>{o.badge.label}</Badge>{/if}
+                        </p>
+                        {#if o.notes}<p class="meta">{@render rich(o.notes)}</p>{/if}
+                        {#if o.locations.length}
+                          <details class="where">
+                            <summary><Icon name="pin" /><span class="w1"><strong>{o.locations[0].act}</strong> · {o.locations[0].text}</span>{#if o.locations.length > 1}<span class="more">+{o.locations.length - 1}</span>{/if}</summary>
+                            <ul>
+                              {#each o.locations as l, i (i)}
+                                <li>
+                                  <p><strong>{l.act || 'Act not stated'}</strong> · {l.text}</p>
+                                  <p class="meta">{l.source}{#if l.href} · <a href={l.href} target="_blank" rel="noopener">source<span class="sr-only"> (opens in a new tab)</span></a>{/if}{#if l.id} · <code>{l.id}</code>{/if}</p>
+                                </li>
+                              {/each}
+                            </ul>
+                          </details>
+                        {:else if o.item.exception === 'generic' || o.item.exception === 'not_an_item'}
+                          <p class="meta">{o.item.exception === 'generic' ? 'Generic pick, no fixed location.' : 'Not a single item, no location.'}</p>
+                        {:else}
+                          <p class="gapnote"><Badge kind="bad" icon="unverified">gap</Badge> no location in the package</p>
+                        {/if}
                       {/if}
                     </div>
                   </li>
